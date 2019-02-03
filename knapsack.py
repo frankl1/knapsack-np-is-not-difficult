@@ -7,6 +7,7 @@ class KnapsackTreeNode:
         self.candidates = []
         self.utility = 0
         self.weight = 0
+        self.parent_estimation = 0
 
     def optimal_estimation(self, sack_capacity):
         u = self.utility
@@ -16,7 +17,20 @@ class KnapsackTreeNode:
             u += self.candidates[i].utility
             w += self.candidates[i].weight
             i += 1
-        return (u, w, i-1)
+        if w > sack_capacity and i > 0:
+            u -= ((w-sack_capacity)/self.candidates[i-1].weight)*self.candidates[i-1].utility
+            return (int(u), w, i-1)
+        else:
+            return (int(u), w, -1)
+            
+    def print_sack(self, sack):
+        string=""
+        for o in sack:
+            string += str(o)+", "
+        return string
+
+    def __str__(self):
+    	return f"U:{self.utility}\nW:{self.weight}\nCandidate:{self.print_sack(self.candidates)}\nSack:{self.print_sack(self.sack)}"
 
 class O:
     def __init__(self, index, utility, weight):
@@ -24,7 +38,7 @@ class O:
         self.utility = utility
         self.weight = weight
     def __str__(self):
-        return f"(u:{self.utility}, w:{self.weight})"
+        return f"(i:{self.index}, u:{self.utility}, w:{self.weight})"
 
 def compute_initial_solution(sack, candidates, sack_capacity):
     w, u = 0, 0
@@ -70,24 +84,36 @@ fifo = [root]
 it = 0
 while len(fifo) > 0:
     it += 1
-    node = fifo.pop(0)
+    node = fifo[0]
     u, w, i = node.optimal_estimation(B)
+    # print(f"node-{it}\n{node}\n\nu={u}, u_cour={u_cour}\nw={w}, w_cour={w_cour}\ni=",i)
 
-    if w > B:
-        o = node.candidates[i]
-        u -= ((w-B) / o.weight) * o.utility
-    
-    if u > u_cour:
+    if u <= u_cour:
+        fifo.pop(0)
+    else:
         if w <= B:
             u_cour = u
             w_cour = w
             sol_cour = node.sack.copy()
-            sol_cour.extend(node.candidates[:i+1])
+            if i == -1:
+                sol_cour.extend(node.candidates)
+            else:
+                sol_cour.extend(node.candidates[:i])
         else:
             splitter = node.candidates.pop(i)
-            child1 = copy.copy(node)
+            child1 = copy.deepcopy(node)
+            child1.utility += splitter.utility
+            child1.weight += splitter.weight
             child1.sack.append(splitter)
-            fifo.extend([child1, node])
+            child1.parent_estimation = u
+            child2 = copy.deepcopy(node)
+            child2.parent_estimation = u
+            fifo.append(child2)
+            # print("child1", child1, "\n", "child2", child2, "\n\n")
+            if child1.weight < B:
+                fifo.append(child1)
+        fifo.pop(0)
+    # input("go...\n")
 print("Utility:", u_cour)
 print("Weight:", w_cour)
 print("Number of objects:", len(sol_cour))
