@@ -9,6 +9,15 @@ class KnapsackTreeNode:
         self.weight = 0
         self.parent_estimation = 0
 
+    def copy(self):
+        node = KnapsackTreeNode()
+        node.sack.extend(self.sack)
+        node.candidates.extend(self.candidates)
+        node.utility = self.utility
+        node.weight = self.weight
+
+        return node
+
     def optimal_estimation(self, sack_capacity):
         u = self.utility
         w = self.weight
@@ -101,12 +110,12 @@ while len(fifo) > 0:
                 sol_cour.extend(node.candidates[:i])
         else:
             splitter = node.candidates.pop(i)
-            child1 = copy.deepcopy(node)
+            child1 = node.copy()
             child1.utility += splitter.utility
             child1.weight += splitter.weight
             child1.sack.append(splitter)
             child1.parent_estimation = u
-            child2 = copy.deepcopy(node)
+            child2 = node.copy()
             child2.parent_estimation = u
             fifo.append(child2)
             # print("child1", child1, "\n", "child2", child2, "\n\n")
